@@ -24,7 +24,8 @@ def get_lines(img, roi):
     Optional: Can we make this dynamic?
     """
     gray_image = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-    cannyed_image = cv2.Canny(gray_image, 200, 300) #first we get the canny edge detected linesw
+    cannyed_image = cv2.Canny(gray_image, 10, 150) #first we get the canny edge detected linesw
+    imsave("cannyed_image.png", cannyed_image)
     if type(roi) == type([]):
         cropped_image = mask_image(cannyed_image, region_of_interest(cannyed_image, np.array([roi],np.int32)))
     if type(roi) == type(np.array([])):
