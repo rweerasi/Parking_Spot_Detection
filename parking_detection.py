@@ -16,7 +16,7 @@ def region_of_interest(img, vertices):
 def mask_image(img, mask):
     return cv2.bitwise_and(img, mask)
 
-def get_lines(img, roi_vertices): 
+def get_lines(img, roi): 
     """
     Lines is the variable that will store the coordinates of all lines 
     detected using Hough Transform 
@@ -25,8 +25,11 @@ def get_lines(img, roi_vertices):
     """
     gray_image = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
     cannyed_image = cv2.Canny(gray_image, 200, 300) #first we get the canny edge detected linesw
-    cropped_image = mask_image(cannyed_image, region_of_interest(cannyed_image, np.array([roi_vertices],np.int32)))#the ROI is then chosen using canny edge detection
-    lines = cv2.HoughLinesP(cropped_image,rho=6,theta=np.pi / 60,threshold=120,lines=np.array([]),minLineLength=20,maxLineGap=15)
+    if type(roi) == type([]):
+        cropped_image = mask_image(cannyed_image, region_of_interest(cannyed_image, np.array([roi],np.int32)))
+    if type(roi) == type(np.array([])):
+        cropped_image = mask_image(cannyed_image, roi)
+    lines = cv2.HoughLinesP(cropped_image,rho=6,theta=np.pi / 60,threshold=80,lines=np.array([]),minLineLength=20,maxLineGap=15)
     return lines
 
 
