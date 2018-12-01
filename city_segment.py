@@ -4,7 +4,9 @@ from torchvision.transforms import transforms
 from deeplabv3 import DeepLabV3
 from scipy.misc import imsave
 import numpy as np
+import cv2
 from PIL import Image
+import matplotlib.pyplot as plt
 
 
 def segmentation(filename, output_file="output.png"):
@@ -41,3 +43,26 @@ def segmentation(filename, output_file="output.png"):
     out_img = np.argmax(output.detach().numpy(), axis=1).astype(np.uint8)[0,:,:]
     np.save("output.npy", out_img)
     imsave(output_file, out_img)
+
+
+def largest_connected_component(filename="output.npy"):
+    """
+    Input:
+        filename:   file name for segmented image, saved as npy or npz
+    Output:
+        output:     numpy array with 255 in largest connected component and 0 for all
+                    other regions
+    """
+    img = np.load("output.npy")
+    nb_components, output, stats, _ = cv2.connectedComponentsWithStats(img, connectivity=4)
+    sizes = stats[:, -1]
+    max_label = np.argmax(sizes) 
+    print(sizes)
+    return 255 * (output == max_label).astype(np.uint8)
+
+
+if __name__ == "__main__":
+    #segmentation("example.png")
+    img = largest_connected_component()
+    plt.imshow(img)
+    plt.show()
