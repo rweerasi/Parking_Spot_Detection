@@ -11,6 +11,7 @@ import parking_detection
 
 
 if __name__ == "__main__":
+    
     # High level segmentation using pre-trained network
     if not os.path.isfile("output.npy"):
         city_segment.segmentation("example.png", "output.png")
@@ -37,6 +38,7 @@ if __name__ == "__main__":
     lines = parking_detection.get_lines(img, 255 - mask_road.astype(np.uint8))
     line_image = parking_detection.draw_lines(img, lines)
 
+    # Save images
     imsave("line_image.png", line_image)
     plt.figure()
     plt.imshow(line_image)
