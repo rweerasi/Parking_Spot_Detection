@@ -16,13 +16,18 @@ def region_of_interest(img, vertices):
 def mask_image(img, mask):
     return cv2.bitwise_and(img, mask)
 
-def get_lines(img, roi): 
+def get_lines(img, roi, param=[6,20,80,20,35]):
     """
-    Lines is the variable that will store the coordinates of all lines 
-    detected using Hough Transform 
-    Tweaking these parameters is a challenge in the HoughLinesP function. 
+    Lines is the variable that will store the coordinates of all lines
+    detected using Hough Transform
+    Tweaking these parameters is a challenge in the HoughLinesP function.
     Optional: Can we make this dynamic?
     """
+    rho=param[0]
+    angle=param[1]*np.pi/180
+    thresh=param[2]
+    min_length=param[3]
+    max_gap=param[4]
     gray_image = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
     cannyed_image = cv2.Canny(gray_image, 10, 150) #first we get the canny edge detected linesw
     imsave("cannyed_image.png", cannyed_image)
@@ -30,12 +35,12 @@ def get_lines(img, roi):
         cropped_image = mask_image(cannyed_image, region_of_interest(cannyed_image, np.array([roi],np.int32)))
     if type(roi) == type(np.array([])):
         cropped_image = mask_image(cannyed_image, roi)
-    lines = cv2.HoughLinesP(cropped_image,rho=6,theta=np.pi / 60,threshold=80,lines=np.array([]),minLineLength=20,maxLineGap=15)
+    lines = cv2.HoughLinesP(cropped_image,rho=rho,theta=angle,threshold=thresh,lines=np.array([]),minLineLength=min_length,maxLineGap=max_gap)
     return lines
 
 
 """
-following is a function which draws the lines on the image. I have used it as 
+following is a function which draws the lines on the image. I have used it as
 is from the page
 https://medium.com/@mrhwick/simple-lane-detection-with-opencv-bfeb6ae54ec0
 """
@@ -59,23 +64,47 @@ def draw_lines(img, lines, color=[255, 0, 0], thickness=3):
 
 
 if __name__ == "__main__":
-    
-    img=cv2.imread("example.png") 
-    height, width, channels = img.shape 
 
-    region_of_interest_vertices = [(0, height),(0, height/2.5),(width, height/2.5),] 
+    #img=cv2.imread("parking_2.png")
+    #height, width, channels = img.shape
+    param=[6,0.01,100,50,35]
 
-    cropped_image = mask_image(img, region_of_interest(img,np.array([region_of_interest_vertices], np.int32),)) #the actual cropped image
-    plt.figure()
-    plt.imshow(cropped_image)
-    plt.show()
-    imsave("cropped_image.png", cropped_image)
+    """
+    rho=rho,theta=angle,threshold=thresh,lines=np.array([]),minLineLength=min_length,maxLineGap=max_gap)
+    """
+    segments = np.load("output.npy")
+    mask = 255 * (segments == 0).astype(np.uint8)
 
-    lines = get_lines(img, region_of_interest_vertices)
+    mask_road = np.zeros(mask.shape)
+    mask_road[segments == 0] = 255
+    img = cv2.imread("parking_4.png")
+    mask = np.dstack((mask_road, mask_road, mask_road)).astype(np.uint8)
+    masked_image = mask_image(img, mask)
+
+
+    # Apply traditional CV to masked image
+    lines = get_lines(img,  mask_road.astype(np.uint8),param)
     line_image = draw_lines(img, lines)
-    imsave("line_image.png", line_image)
+
+    # Save images
+    imsave("mask_image.png",masked_image)
+
+    imsave("line_image"+str(param)+".png", line_image)
     plt.figure()
     plt.imshow(line_image)
     plt.show()
 
+    #region_of_interest_vertices = [(0, height),(0, height/2.5),(width, height/2.5),]
 
+    #cropped_image = mask_image(img, region_of_interest(img,np.array([region_of_interest_vertices], np.int32),)) #the actual cropped image
+    #plt.figure()
+    #plt.imshow(cropped_image)
+    #plt.show()
+    #imsave("cropped_image.png", cropped_image)
+
+    #lines = get_lines(img, region_of_interest_vertices)
+    #line_image = draw_lines(img, lines)
+    #imsave("line_image.png", line_image)
+    #plt.figure()
+    ##plt.imshow(line_image)
+    #plt.show()
