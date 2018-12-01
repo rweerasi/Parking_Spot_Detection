@@ -20,7 +20,12 @@ def segmentation(filename, output_file="output.png"):
     """
     # Load pre-trained network
     model = DeepLabV3(1, ".")
-    model.load_state_dict(torch.load("model_13_2_2_2_epoch_580.pth"))
+
+    if torch.cuda.is_available():
+        model.load_state_dict(torch.load("model_13_2_2_2_epoch_580.pth"))
+    else:
+        model.load_state_dict(torch.load("model_13_2_2_2_epoch_580.pth", map_location=lambda storage, loc: storage))
+    
     model.eval()
 
     # Preprocess input
@@ -62,7 +67,7 @@ def largest_connected_component(filename="output.npy"):
 
 
 if __name__ == "__main__":
-    #segmentation("example.png")
+    segmentation("example.png")
     img = largest_connected_component()
     plt.imshow(img)
     plt.show()
