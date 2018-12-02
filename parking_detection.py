@@ -37,6 +37,7 @@ def get_lines(img, roi, param=[6,20,80,20,35]):
     if type(roi) == type(np.array([])):
         cropped_image = mask_image(cannyed_image, roi)
     lines = cv2.HoughLinesP(cropped_image,rho=rho,theta=angle,threshold=thresh,lines=np.array([]),minLineLength=min_length,maxLineGap=max_gap)
+    #print(lines)
     return lines
 
 
@@ -63,6 +64,45 @@ def draw_lines(img, lines, color=[255, 0, 0], thickness=3):
 
     return img
 
+def get_slopes(img,lines):
+
+    lines = np.array(lines)
+    x_vec = lines[:,:,0] - lines[:,:,2]
+    y_vec = lines[:,:,1] - lines[:,:,3]
+    slope = np.divide(y_vec,x_vec)
+    intercept = lines[:,:,1] - np.multiply(lines[:,:,0],slope)
+    print(slope)
+    print(intercept)
+    n_lines, _ = np.shape(intercept)
+
+    new_lines = np.zeros((n_lines*n_lines,1,4))
+    k = 0
+
+
+    for i in range(0,n_lines):
+        for j in range(i, n_lines):
+
+            if (abs(slope[i,0] - slope[j,0]) < 0.1 and abs(intercept[i,0] - intercept[j,0]) < 0.5):
+                if (lines[i,0,0] > lines[j,0,0]):
+
+                    new_lines[k,0,0] = lines[j,0,0]
+                    new_lines[k,0,1] = lines[j,0,1]
+                    new_lines[k,0,2] = lines[i,0,2]
+                    new_lines[k,0,3] = lines[i,0,3]
+
+                else:
+
+                    new_lines[k,0,0] = lines[i,0,0]
+                    new_lines[k,0,1] = lines[i,0,1]
+                    new_lines[k,0,2] = lines[j,0,2]
+                    new_lines[k,0,3] = lines[j,0,3]
+
+            k = k+1
+
+    new_lines = new_lines[:k,:,:]
+    new_lines = new_lines.astype(int)
+
+    return new_lines
 
 
 if __name__ == "__main__":
@@ -91,7 +131,12 @@ if __name__ == "__main__":
     # Apply traditional CV to masked image
     lines = get_lines(img,  mask_road.astype(np.uint8),param)
     line_image = draw_lines(img, lines)
-
+    imsave("woslope.png",line_image)
+    new_lines = get_slopes(img,lines)
+    print(lines)
+    print(new_lines[1:100])
+    line_image_slope = draw_lines(img, new_lines)
+    imsave("wslope.png",line_image_slope)
     # Save images
     imsave("mask_image.png",masked_image)
 
