@@ -63,6 +63,38 @@ def draw_lines(img, lines, color=[255, 0, 0], thickness=3):
 
     return img
 
+def lines_processing(lines):
+    """ Processes the line from the Hough Transform in order to glean
+        information about parking spots
+    Input:
+        lines:              list of lines, represented as 4 values, (start_x, 
+                            start_y, end_x, end_y)
+    Outputs:
+        processed_lines:    list of lines, in the same format as input, which 
+                            better represents the parking spots present in
+                            the image
+    """
+    horizontal_lines = []
+    for line in lines:
+        line = line[0]
+        angle = np.arctan2(line[3] - line[1], line[2] - line[0])
+        # Get only horizontal(ish) lines
+        max_ang = 0.25
+        if (angle < max_ang and angle > -max_ang) or \
+            (angle > np.pi - max_ang or angle < -np.pi + max_ang):
+            horizontal_lines.append([line])
+
+    left_lines = []; right_lines = []
+    for line in horizontal_lines:
+        line = line[0]
+        if line[0] < 1024 and line[2] < 1024:
+            left_lines.append([line])
+        if line[0] > 1024 and line[2] > 1024:
+            right_lines.append([line])
+        
+
+    return left_lines, right_lines
+
 
 
 if __name__ == "__main__":
@@ -90,6 +122,7 @@ if __name__ == "__main__":
 
     # Apply traditional CV to masked image
     lines = get_lines(img,  mask_road.astype(np.uint8),param)
+    lines = lines_processing(lines)
     line_image = draw_lines(img, lines)
 
     # Save images
