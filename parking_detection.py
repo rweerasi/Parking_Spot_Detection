@@ -30,7 +30,7 @@ def get_lines(img, roi, param=[6,20,80,20,35]):
     min_length=param[3]
     max_gap=param[4]
     gray_image = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-    cannyed_image = cv2.Canny(gray_image, 10, 150) #first we get the canny edge detected linesw
+    cannyed_image = cv2.Canny(gray_image, 50, 250) #first we get the canny edge detected linesw
     imsave("cannyed_image.png", cannyed_image)
     if type(roi) == type([]):
         cropped_image = mask_image(cannyed_image, region_of_interest(cannyed_image, np.array([roi],np.int32)))
@@ -82,7 +82,7 @@ def get_slopes(img,lines):
     for i in range(0,n_lines):
         for j in range(i, n_lines):
 
-            if (abs(slope[i,0] - slope[j,0]) < 0.1 and abs(intercept[i,0] - intercept[j,0]) < 0.5):
+            if (abs(slope[i,0] - slope[j,0]) < 0.1 and abs(intercept[i,0] - intercept[j,0]) < 2):
                 if (lines[i,0,0] > lines[j,0,0]):
 
                     new_lines[k,0,0] = lines[j,0,0]
@@ -115,8 +115,15 @@ def lines_processing(lines):
                             better represents the parking spots present in
                             the image
     """
-    horizontal_lines = []
+    long_lines = []
     for line in lines:
+        line = line[0]
+        length = np.sqrt((line[0] - line[2])**2 + (line[1] - line[3])**2)
+        if length > 8:
+            long_lines.append([line])
+
+    horizontal_lines = []
+    for line in long_lines:
         line = line[0]
         angle = np.arctan2(line[3] - line[1], line[2] - line[0])
         # Get only horizontal(ish) lines
@@ -125,6 +132,8 @@ def lines_processing(lines):
             (angle > np.pi - max_ang or angle < -np.pi + max_ang):
             horizontal_lines.append([line])
 
+    return horizontal_lines
+    '''
     left_lines = []; right_lines = []
     for line in horizontal_lines:
         line = line[0]
@@ -132,23 +141,23 @@ def lines_processing(lines):
             left_lines.append([line])
         if line[0] > 1024 and line[2] > 1024:
             right_lines.append([line])
-        
+    ''' 
 
-    return left_lines, right_lines
+    #return left_lines, right_lines
 
 
 if __name__ == "__main__":
 
     #img=cv2.imread("parking_2.png")
     #height, width, channels = img.shape
-    param=[6,0.01,100,50,35]
-    filen="parking_4.png"
+    param=[6,0.01,100,30,35]
+    filen="example.jpg"
 
     """
     rho=rho,theta=angle,threshold=thresh,lines=np.array([]),minLineLength=min_length,maxLineGap=max_gap)
     """
     if not os.path.isfile("output.npy"):
-        city_segment.segmentation(filen, "output.png")
+        city_segment.segmentation(filen, "output.jpg")
 
     segments = np.load("output.npy")
     mask = 255 * (segments == 0).astype(np.uint8)
@@ -162,13 +171,13 @@ if __name__ == "__main__":
 
     # Apply traditional CV to masked image
     lines = get_lines(img,  mask_road.astype(np.uint8),param)
-    lines = lines_processing(lines)
-    line_image = draw_lines(img, lines)
-    imsave("woslope.png",line_image)
-    new_lines = get_slopes(img,lines)
-    print(lines)
-    print(new_lines[1:100])
+    h_lines = lines_processing(lines)
+    #l_new_lines, _ = lines_processing(get_slopes(img,l_lines))
+    new_lines = get_slopes(img,h_lines)
+    line_image = draw_lines(img, h_lines)
     line_image_slope = draw_lines(img, new_lines)
+    imsave("woslope.png",line_image)
+    
     imsave("wslope.png",line_image_slope)
     # Save images
     imsave("mask_image.png",masked_image)
