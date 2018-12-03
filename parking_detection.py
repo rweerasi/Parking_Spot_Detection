@@ -104,6 +104,22 @@ def get_slopes(img,lines):
 
     return new_lines
 
+def get_harris_corners(img):
+
+    gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+    gray = np.float32(gray)
+    dst = cv2.cornerHarris(gray,2,3,0.04)
+
+    #result is dilated for marking the corners, not important
+    dst = cv2.dilate(dst,None)
+    # Threshold for an optimal value, it may vary depending on the image.
+    img[dst>0.01*dst.max()]=[255,0,0]
+    cv2.imshow('dst',img)
+    if cv2.waitKey(0) & 0xff == 27:
+        cv2.destroyAllWindows()
+
+    return dst
+
 def lines_processing(lines):
     """ Processes the line from the Hough Transform in order to glean
         information about parking spots
@@ -170,6 +186,7 @@ if __name__ == "__main__":
 
 
     # Apply traditional CV to masked image
+    dst = get_harris_corners(img)
     lines = get_lines(img,  mask_road.astype(np.uint8),param)
     h_lines = lines_processing(lines)
     #l_new_lines, _ = lines_processing(get_slopes(img,l_lines))
