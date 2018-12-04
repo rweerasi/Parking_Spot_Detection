@@ -16,26 +16,12 @@ if __name__ == "__main__":
     if not os.path.isfile("output.npy"):
         city_segment.segmentation("example.png", "output.png")
 
-    # Create mask for only road 
-    segments = np.load("output.npy")
-    mask = 255 * (segments == 0).astype(np.uint8)
-
-    # TODO: Should probably put this in its own function
-    # Get largest connected component
-    ret, labels, stats, centroids = cv2.connectedComponentsWithStats(255 - mask)
-    sizes = stats[:, -1]
-    max_label = np.argmax(sizes)
-    mask_road = np.zeros(mask.shape)
-    mask_road[labels == max_label] = 255
-    print(labels.shape)
-
-    # Apply mask 
-    mask = np.dstack((mask_road, mask_road, mask_road)).astype(np.uint8)
-    img = cv2.imread("example.png")
-    masked_image = parking_detection.mask_image(img, mask)
+    # Create mask for only largest road segment
+    mask = city_segment.largest_connected_component(filename="output.npy")
 
     # Apply traditional CV to masked image
-    lines = parking_detection.get_lines(img, 255 - mask_road.astype(np.uint8))
+    img = cv2.imread("example.png")
+    lines = parking_detection.get_lines(img, mask.astype(np.uint8))
     line_image = parking_detection.draw_lines(img, lines)
 
     # Save images

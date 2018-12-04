@@ -59,15 +59,17 @@ def largest_connected_component(filename="output.npy"):
                     other regions
     """
     img = np.load("output.npy")
+    img = (img == 0).astype(np.uint8) 
     nb_components, output, stats, _ = cv2.connectedComponentsWithStats(img, connectivity=4)
-    sizes = stats[:, -1]
+    sizes = stats[1:, -1]
     max_label = np.argmax(sizes) 
     print(sizes)
-    return 255 * (output == max_label).astype(np.uint8)
+    return 255 * (output == max_label + 1).astype(np.uint8)
 
 
 if __name__ == "__main__":
-    segmentation("example.png")
+    # segmentation("example.png")
     img = largest_connected_component()
     plt.imshow(img)
+    plt.colorbar()
     plt.show()
