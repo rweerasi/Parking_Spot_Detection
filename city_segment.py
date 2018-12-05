@@ -9,7 +9,7 @@ from PIL import Image
 import matplotlib.pyplot as plt
 
 
-def segmentation(filename, output_file="output.png"):
+def segmentation(filename, output_file="output.jpg"):
     """
     Input:
         filename:   location of (1024x2048x3) png input image
@@ -75,8 +75,9 @@ def dilation(img, kernel_size=5):
     return cv2.dilate(img, kernel, iterations=1)
 
 if __name__ == "__main__":
-    # segmentation("example.png")
+    segmentation("example.jpg")
     img = largest_connected_component()
+    img = closing(img, 30)
     img = dilation(img, 30)
     plt.imshow(img)
     plt.colorbar()

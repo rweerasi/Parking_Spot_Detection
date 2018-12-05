@@ -5,7 +5,7 @@ import cv2
 from scipy.misc import imsave
 import os
 import city_segment
-
+import pandas as pd
 
 def region_of_interest(img, vertices):
     mask = np.zeros_like(img)
@@ -30,13 +30,17 @@ def get_lines(img, roi, param=[6,20,80,20,35]):
     min_length=param[3]
     max_gap=param[4]
     gray_image = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-    cannyed_image = cv2.Canny(gray_image, 50, 250) #first we get the canny edge detected linesw
+    kernel_size = 5
+    gray_image = cv2.GaussianBlur(gray_image,(kernel_size, kernel_size),0)
+    cannyed_image = cv2.Canny(gray_image, 50, 150) #first we get the canny edge detected linesw
     imsave("cannyed_image.png", cannyed_image)
     if type(roi) == type([]):
         cropped_image = mask_image(cannyed_image, region_of_interest(cannyed_image, np.array([roi],np.int32)))
     if type(roi) == type(np.array([])):
         cropped_image = mask_image(cannyed_image, roi)
     lines = cv2.HoughLinesP(cropped_image,rho=rho,theta=angle,threshold=thresh,lines=np.array([]),minLineLength=min_length,maxLineGap=max_gap)
+
+
     #print(lines)
     return lines
 
@@ -64,20 +68,26 @@ def draw_lines(img, lines, color=[255, 0, 0], thickness=3):
 
     return img
 
+def line_dist(line1, line2):
+
+    print(np.linalg.norm(line1-line2))
+    return np.linalg.norm(line1-line2)
+
+
 def get_slopes(img,lines):
 
     lines = np.array(lines)
     x_vec = lines[:,:,0] - lines[:,:,2]
     y_vec = lines[:,:,1] - lines[:,:,3]
+    print(lines)
     slope = np.divide(y_vec,x_vec)
     intercept = lines[:,:,1] - np.multiply(lines[:,:,0],slope)
-    print(slope)
-    print(intercept)
     n_lines, _ = np.shape(intercept)
 
     new_lines = np.zeros((n_lines*n_lines,1,4))
     k = 0
 
+    thresh = 100
 
     for i in range(0,n_lines):
         for j in range(i, n_lines):
@@ -85,17 +95,24 @@ def get_slopes(img,lines):
             if (abs(slope[i,0] - slope[j,0]) < 0.1 and abs(intercept[i,0] - intercept[j,0]) < 2):
                 if (lines[i,0,0] > lines[j,0,0]):
 
-                    new_lines[k,0,0] = lines[j,0,0]
-                    new_lines[k,0,1] = lines[j,0,1]
-                    new_lines[k,0,2] = lines[i,0,2]
-                    new_lines[k,0,3] = lines[i,0,3]
+                    dist = line_dist(lines[j,0,2:4],lines[i,0,0:2])
+
+                    if dist < thresh:
+                        new_lines[k,0,0] = lines[j,0,0]
+                        new_lines[k,0,1] = lines[j,0,1]
+                        new_lines[k,0,2] = lines[i,0,2]
+                        new_lines[k,0,3] = lines[i,0,3]
 
                 else:
 
-                    new_lines[k,0,0] = lines[i,0,0]
-                    new_lines[k,0,1] = lines[i,0,1]
-                    new_lines[k,0,2] = lines[j,0,2]
-                    new_lines[k,0,3] = lines[j,0,3]
+                    dist = line_dist(lines[i,0,2:4],lines[j,0,0:2])
+
+                    if dist < thresh:
+
+                        new_lines[k,0,0] = lines[i,0,0]
+                        new_lines[k,0,1] = lines[i,0,1]
+                        new_lines[k,0,2] = lines[j,0,2]
+                        new_lines[k,0,3] = lines[j,0,3]
 
             k = k+1
 
@@ -103,6 +120,40 @@ def get_slopes(img,lines):
     new_lines = new_lines.astype(int)
 
     return new_lines
+
+def get_scatter(lines):
+
+    lines = np.array(lines)
+    x1_vec = lines[:,0,0]  
+    y1_vec = lines[:,0,1] 
+    x2_vec = lines[:,0,2]
+    y2_vec = lines[:,0,3]
+
+    x1_vec = x1_vec.astype(int)
+    x2_vec = x2_vec.astype(int)
+    y1_vec = y1_vec.astype(int)
+    y2_vec = y2_vec.astype(int)
+
+    x_points = np.array([])
+    x_points = x_points.astype(int)
+    y_points = []
+
+    a = np.shape(x1_vec)
+    a = a[0]
+
+    for i in range(0,a):
+        x_points = np.append(x_points,np.linspace(x1_vec[i],x2_vec[i],10))
+        y_points = np.append(y_points,np.linspace(y1_vec[i],y2_vec[i],10))
+
+    #y_points = np.flip(x_points)
+
+    X = np.vstack((x_points,y_points))
+
+    plt.scatter(x_points,y_points)
+    np.savetxt("foo.csv", X, delimiter=",")
+
+    plt.show()
+
 
 def get_harris_corners(img):
 
@@ -143,7 +194,7 @@ def lines_processing(lines):
         line = line[0]
         angle = np.arctan2(line[3] - line[1], line[2] - line[0])
         # Get only horizontal(ish) lines
-        max_ang = 0.25
+        max_ang = 0.15
         if (angle < max_ang and angle > -max_ang) or \
             (angle > np.pi - max_ang or angle < -np.pi + max_ang):
             horizontal_lines.append([line])
@@ -166,7 +217,7 @@ if __name__ == "__main__":
 
     #img=cv2.imread("parking_2.png")
     #height, width, channels = img.shape
-    param=[6,0.01,100,30,35]
+    param=[1,0.001,10,20,40]
     filen="example.jpg"
 
     """
@@ -176,28 +227,26 @@ if __name__ == "__main__":
         city_segment.segmentation(filen, "output.jpg")
 
     segments = np.load("output.npy")
-    mask = 255 * (segments == 0).astype(np.uint8)
 
-    mask_road = np.zeros(mask.shape)
-    mask_road[segments == 0] = 255
+    mask_road = city_segment.largest_connected_component()
     img = cv2.imread(filen)
-    mask = np.dstack((mask_road, mask_road, mask_road)).astype(np.uint8)
-    masked_image = mask_image(img, mask)
-
 
     # Apply traditional CV to masked image
-    dst = get_harris_corners(img)
-    lines = get_lines(img,  mask_road.astype(np.uint8),param)
+    #dst = get_harris_corners(img)
+    lines = get_lines(img,  mask_road.astype(np.uint8), param)
     h_lines = lines_processing(lines)
-    #l_new_lines, _ = lines_processing(get_slopes(img,l_lines))
+    get_scatter(h_lines)
     new_lines = get_slopes(img,h_lines)
+    new_lines = lines_processing(new_lines)
     line_image = draw_lines(img, h_lines)
     line_image_slope = draw_lines(img, new_lines)
     imsave("woslope.png",line_image)
     
     imsave("wslope.png",line_image_slope)
+    gray_image = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+
     # Save images
-    imsave("mask_image.png",masked_image)
+    imsave("mask_image.png",gray_image*mask_road)
 
     imsave("line_image"+str(param)+".png", line_image)
     plt.figure()
