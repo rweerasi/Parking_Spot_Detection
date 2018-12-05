@@ -65,11 +65,19 @@ def largest_connected_component(filename="output.npy"):
     max_label = np.argmax(sizes) 
     print(sizes)
     return 255 * (output == max_label + 1).astype(np.uint8)
+    
+def closing(img, kernel_size=5):
+    kernel = np.ones((kernel_size, kernel_size), np.uint8)
+    return cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel)
 
+def dilation(img, kernel_size=5):
+    kernel = np.ones((kernel_size, kernel_size), np.uint8)
+    return cv2.dilate(img, kernel, iterations=1)
 
 if __name__ == "__main__":
     # segmentation("example.png")
     img = largest_connected_component()
+    img = dilation(img, 30)
     plt.imshow(img)
     plt.colorbar()
     plt.show()
