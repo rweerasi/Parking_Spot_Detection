@@ -7,6 +7,11 @@ import os
 import city_segment
 import pandas as pd
 
+from sklearn.cluster import AgglomerativeClustering
+import scipy.cluster.hierarchy as sch
+
+
+
 def region_of_interest(img, vertices):
     mask = np.zeros_like(img)
     match_mask_color = 255 # making grayscale
@@ -154,6 +159,62 @@ def get_scatter(lines):
 
     plt.show()
 
+def hc():
+
+    X = np.genfromtxt('foo.csv',delimiter=',')
+
+    X = np.transpose(X)
+
+    X[:,1] = 10*X[:,1]
+
+    dendrogram = sch.dendrogram(sch.linkage(X, method = 'ward'))
+    plt.title('Dendrogram')
+    plt.ylabel('Skewed Euclidean distances')
+    plt.show()
+
+    print(sch.linkage(X, method = 'ward')[-30:,2])
+
+
+    n_clust = 8
+    # Fitting Hierarchical Clustering to the dataset
+    hc = AgglomerativeClustering(n_clusters = n_clust, affinity = 'euclidean', linkage = 'ward')
+    y_hc = hc.fit_predict(X)
+
+    X[:,1] = np.round(0.1*X[:,1])
+
+    # Visualising the clusters
+    plt.scatter(X[y_hc == 0, 0], X[y_hc == 0, 1], s = 100, c = 'red', label = 'Cluster 1')
+    plt.scatter(X[y_hc == 1, 0], X[y_hc == 1, 1], s = 100, c = 'blue', label = 'Cluster 2')
+    plt.scatter(X[y_hc == 2, 0], X[y_hc == 2, 1], s = 100, c = 'green', label = 'Cluster 3')
+    plt.scatter(X[y_hc == 3, 0], X[y_hc == 3, 1], s = 100, c = 'cyan', label = 'Cluster 4')
+    plt.scatter(X[y_hc == 4, 0], X[y_hc == 4, 1], s = 100, c = 'magenta', label = 'Cluster 5')
+    plt.scatter(X[y_hc == 5, 0], X[y_hc == 5, 1], s = 100, c = 'yellow', label = 'Cluster 6')
+    plt.scatter(X[y_hc == 6, 0], X[y_hc == 6, 1], s = 100, c = 'brown', label = 'Cluster 7')
+    plt.scatter(X[y_hc == 7, 0], X[y_hc == 7, 1], s = 100, c = 'black', label = 'Cluster 8')
+    #plt.scatter(X[y_hc == 8, 0], X[y_hc == 7, 1], s = 100, c = 'orange', label = 'Cluster 9')
+    plt.title('Clusters of parking lines')
+    
+    return X, y_hc, n_clust
+
+def parking_spots(X,y_hc,n_clust):
+
+
+    lines = np.zeros((n_clust,1,4))
+    for i in range(n_clust):
+
+        k = np.argmin(X[y_hc == i, 0]) 
+        lines[i,0,0] = np.amin(X[y_hc == i, 0])
+        lines[i,0,1] = X[y_hc == i, 1][k]
+
+        k = np.argmax(X[y_hc == i, 0]) 
+        lines[i,0,2] = np.amax(X[y_hc == i, 0])
+        lines[i,0,3] = X[y_hc == i, 1][k]
+
+        lines = lines.astype(int)
+
+    return lines
+        
+
 
 def get_harris_corners(img):
 
@@ -217,7 +278,7 @@ if __name__ == "__main__":
 
     #img=cv2.imread("parking_2.png")
     #height, width, channels = img.shape
-    param=[1,0.001,10,20,40]
+    param=[1,0.001,10,60,40]
     filen="example.jpg"
 
     """
@@ -232,17 +293,19 @@ if __name__ == "__main__":
     img = cv2.imread(filen)
 
     # Apply traditional CV to masked image
-    #dst = get_harris_corners(img)
     lines = get_lines(img,  mask_road.astype(np.uint8), param)
     h_lines = lines_processing(lines)
     get_scatter(h_lines)
-    new_lines = get_slopes(img,h_lines)
-    new_lines = lines_processing(new_lines)
-    line_image = draw_lines(img, h_lines)
-    line_image_slope = draw_lines(img, new_lines)
+    print(np.shape(h_lines))
+    X,y_hc,n_clust = hc()
+    clust_lines = parking_spots(X,y_hc,n_clust)
+    #new_lines = get_slopes(img,h_lines)
+    #new_lines = lines_processing(new_lines)
+    line_image = draw_lines(img, clust_lines)
+    #line_image_slope = draw_lines(img, new_lines)
     imsave("woslope.png",line_image)
     
-    imsave("wslope.png",line_image_slope)
+   # imsave("wslope.png",line_image_slope)
     gray_image = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
     # Save images

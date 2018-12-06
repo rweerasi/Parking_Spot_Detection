@@ -77,8 +77,8 @@ def dilation(img, kernel_size=5):
 if __name__ == "__main__":
     segmentation("example.jpg")
     img = largest_connected_component()
-    img = closing(img, 30)
-    img = dilation(img, 30)
+    img = closing(img, 100)
+    img = dilation(img, 100)
     plt.imshow(img)
     plt.colorbar()
     plt.show()

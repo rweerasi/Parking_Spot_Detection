@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     # Apply traditional CV to masked image
     img = cv2.imread("example.png")
-    lines = parking_detection.get_lines(img, mask.astype(np.uint8))
+    lines = parking_detection.get_lines(img, mask)
     line_image = parking_detection.draw_lines(img, lines)
 
     # Save images
