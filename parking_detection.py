@@ -78,7 +78,7 @@ def line_dist(line1, line2):
     print(np.linalg.norm(line1-line2))
     return np.linalg.norm(line1-line2)
 
-
+'''
 def get_slopes(img,lines):
 
     lines = np.array(lines)
@@ -125,7 +125,7 @@ def get_slopes(img,lines):
     new_lines = new_lines.astype(int)
 
     return new_lines
-
+'''
 def get_scatter(lines):
 
     lines = np.array(lines)
@@ -175,7 +175,7 @@ def hc():
     print(sch.linkage(X, method = 'ward')[-30:,2])
 
 
-    n_clust = 8
+    n_clust = 9
     # Fitting Hierarchical Clustering to the dataset
     hc = AgglomerativeClustering(n_clusters = n_clust, affinity = 'euclidean', linkage = 'ward')
     y_hc = hc.fit_predict(X)
@@ -191,7 +191,10 @@ def hc():
     plt.scatter(X[y_hc == 5, 0], X[y_hc == 5, 1], s = 100, c = 'yellow', label = 'Cluster 6')
     plt.scatter(X[y_hc == 6, 0], X[y_hc == 6, 1], s = 100, c = 'brown', label = 'Cluster 7')
     plt.scatter(X[y_hc == 7, 0], X[y_hc == 7, 1], s = 100, c = 'black', label = 'Cluster 8')
-    #plt.scatter(X[y_hc == 8, 0], X[y_hc == 7, 1], s = 100, c = 'orange', label = 'Cluster 9')
+    plt.scatter(X[y_hc == 8, 0], X[y_hc == 8, 1], s = 100, c = 'orange', label = 'Cluster 9')
+    #plt.scatter(X[y_hc == 9, 0], X[y_hc == 9, 1], s = 100, c = 'purple', label = 'Cluster 10')
+    #plt.scatter(X[y_hc == 10, 0], X[y_hc == 10, 1], s = 100, c = 'pink', label = 'Cluster 11')
+    
     plt.title('Clusters of parking lines')
     
     return X, y_hc, n_clust
@@ -299,17 +302,18 @@ if __name__ == "__main__":
     print(np.shape(h_lines))
     X,y_hc,n_clust = hc()
     clust_lines = parking_spots(X,y_hc,n_clust)
+    clust_lines = lines_processing(clust_lines)
     #new_lines = get_slopes(img,h_lines)
     #new_lines = lines_processing(new_lines)
     line_image = draw_lines(img, clust_lines)
     #line_image_slope = draw_lines(img, new_lines)
-    imsave("woslope.png",line_image)
+    cv2.imwrite("woslope.png",line_image)
     
    # imsave("wslope.png",line_image_slope)
     gray_image = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
     # Save images
-    imsave("mask_image.png",gray_image*mask_road)
+    cv2.imwrite("mask_image.png",gray_image*mask_road)
 
     imsave("line_image"+str(param)+".png", line_image)
     plt.figure()
