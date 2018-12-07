@@ -55,15 +55,17 @@ def segmentation(filename, output_file="output.png"):
     """
 
     # Draw bottom bounding boxes on image
+    lines = []
     for bbox in bboxes_car:
         x_1 = bbox[2]
         x_2 = bbox[0]
         y = max(bbox[1], bbox[3])
         cv2.line(orig_img, (x_1, y), (x_2, y), (255, 0, 0), 5)
-    #cv2.imshow("", orig_img)
-    #cv2.waitKey(-1)
+        lines.append([[int(2*x_1), int(2*y), int(2*x_2), int(2*y)]])
+    cv2.imshow("", orig_img)
+    cv2.waitKey(-1)
 
-    return bboxes_car
+    return lines
 
 
 if __name__ == "__main__":
