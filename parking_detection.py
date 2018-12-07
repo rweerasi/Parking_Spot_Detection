@@ -46,7 +46,6 @@ def get_lines(img, roi, param=[6,20,80,20,35]):
     lines = cv2.HoughLinesP(cropped_image,rho=rho,theta=angle,threshold=thresh,lines=np.array([]),minLineLength=min_length,maxLineGap=max_gap)
 
 
-    #print(lines)
     return lines
 
 
@@ -156,7 +155,7 @@ def get_scatter(lines):
     plt.scatter(x_points,y_points)
     np.savetxt("foo.csv", X, delimiter=",")
 
-    plt.show()
+    plt.savefig("scatter.png")
 
 def hc():
 
@@ -169,7 +168,7 @@ def hc():
     dendrogram = sch.dendrogram(sch.linkage(X, method = 'ward'))
     plt.title('Dendrogram')
     plt.ylabel('Skewed Euclidean distances')
-    plt.show()
+    plt.savefig("dendogram.png")
 
     #print(sch.linkage(X, method = 'ward')[-30:,2])
 
@@ -410,10 +409,12 @@ if __name__ == "__main__":
     # Save images
     cv2.imwrite("mask_image.png",gray_image*mask_road)
 
+    """
     imsave("line_image"+str(param)+".png", line_image)
     plt.figure()
     plt.imshow(line_image)
     plt.show()
+    """
 
     #region_of_interest_vertices = [(0, height),(0, height/2.5),(width, height/2.5),]
 

@@ -7,8 +7,9 @@ from gluoncv import model_zoo, data, utils
 
 
 def cars_only(array, ids, scores, threshold):
-    #a = array
-    # return (np.array(a)[np.where(np.array(ids) == 2.), :])[0].tolist()
+    """ 
+    Gets the array elements corresponding to cars (above a score threshold)
+    """
     output = []
     for ii, id in enumerate(ids):
         # Check if the label is a car
@@ -62,8 +63,8 @@ def segmentation(filename, output_file="output.png"):
         y = max(bbox[1], bbox[3])
         cv2.line(orig_img, (x_1, y), (x_2, y), (255, 0, 0), 5)
         lines.append([[int(2*x_1), int(2*y), int(2*x_2), int(2*y)]])
-    cv2.imshow("", orig_img)
-    cv2.waitKey(-1)
+
+    cv2.imwrite("image_bbox_floor.png", orig_img)
 
     return lines
 

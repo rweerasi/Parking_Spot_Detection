@@ -45,7 +45,9 @@ if __name__ == "__main__":
     blank = np.zeros(img.shape)
     parking_detection.highlight_spots(blank, clust_lines, car_lines)
 
-    print(img.shape, blank.shape)
+    # Creating output image
+    blank = cv2.bitwise_and(blank.astype(np.uint8), 
+                    np.dstack((mask, mask, mask)).astype(np.uint8))
     img = cv2.bitwise_or(img.astype(np.uint8), blank.astype(np.uint8))
     
     cv2.imshow("", img)
