@@ -182,6 +182,7 @@ def hc():
     X[:,1] = np.round(0.1*X[:,1])
 
     # Visualising the clusters
+    """
     plt.scatter(X[y_hc == 0, 0], X[y_hc == 0, 1], s = 100, c = 'red', label = 'Cluster 1')
     plt.scatter(X[y_hc == 1, 0], X[y_hc == 1, 1], s = 100, c = 'blue', label = 'Cluster 2')
     plt.scatter(X[y_hc == 2, 0], X[y_hc == 2, 1], s = 100, c = 'green', label = 'Cluster 3')
@@ -195,7 +196,7 @@ def hc():
     #plt.scatter(X[y_hc == 10, 0], X[y_hc == 10, 1], s = 100, c = 'pink', label = 'Cluster 11')
     
     plt.title('Clusters of parking lines')
-    
+    """
     return X, y_hc, n_clust
 
 def parking_spots(X,y_hc,n_clust):
@@ -279,7 +280,7 @@ def lines_processing(lines):
 def extend_lines(lines):
 
     # Separate into left and right 
-    border = 1024
+    border = 900
     left_lines = []; right_lines = []
     for line in lines:
         line = line[0]
@@ -315,7 +316,7 @@ def extend_lines(lines):
 
     return long_lines
 
-def highlight_spots(img, long_lines):
+def highlight_spots(img, long_lines, car_lines):
 
     # Separate into left and right 
     border = 1024
@@ -342,7 +343,11 @@ def highlight_spots(img, long_lines):
         a = np.array(ordered_lines[ii]).reshape((2,2))
         b = np.flipud(np.array(ordered_lines[ii+1]).reshape((2,2)))
         pts = np.vstack((a, b))
-        cv2.polylines(img, [pts], True, (0, 0, 255), 3)
+        if True:
+            cv2.fillPoly(img, [pts], (0,0,255))
+            #cv2.polylines(img, [pts], True, (0,0,255), 3)
+        else:
+            cv2.polylines(img, [pts], True, (0,255,0), 3)
 
     # Sort right by right-intercept
     keys = []
@@ -359,10 +364,12 @@ def highlight_spots(img, long_lines):
         a = np.array(ordered_lines[ii]).reshape((2,2))
         b = np.flipud(np.array(ordered_lines[ii+1]).reshape((2,2)))
         pts = np.vstack((a,b))
-        cv2.polylines(img, [pts], True, (0,0,255), 3)
+        if True:
+            cv2.fillPoly(img, [pts], (0,0,255))
+            #cv2.polylines(img, [pts], True, (0,0,255), 3)
+        else:
+            cv2.polylines(img, [pts], True, (0,255,0), 3)
 
-
-        
 
 if __name__ == "__main__":
 
