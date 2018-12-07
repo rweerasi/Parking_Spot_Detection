@@ -175,7 +175,7 @@ def hc():
     print(sch.linkage(X, method = 'ward')[-30:,2])
 
 
-    n_clust = 7
+    n_clust = 10
     # Fitting Hierarchical Clustering to the dataset
     hc = AgglomerativeClustering(n_clusters = n_clust, affinity = 'euclidean', linkage = 'ward')
     y_hc = hc.fit_predict(X)
@@ -321,7 +321,7 @@ def highlight_spots(img, long_lines):
     # Separate into left and right 
     border = 1024
     left_lines = []; right_lines = []
-    for line in lines:
+    for line in long_lines:
         line = line[0]
         if line[0] < border and line[2] < border:
             left_lines.append([line])
@@ -338,9 +338,31 @@ def highlight_spots(img, long_lines):
     for ii in range(len(left_lines)):
         ordered_lines.append(left_lines[order[ii]])
     
+    # Draw rectangles 
     for ii in range(len(left_lines) - 1):
-        pass
-        
+        a = np.array(left_lines[ii]).reshape((2,2))
+        b = np.flipud(np.array(left_lines[ii+1]).reshape((2,2)))
+        pts = np.vstack((a, b))
+        cv2.polylines(img, [pts], True, (0, 0, 255), 5)
+
+    # Sort right by right-intercept
+    keys = []
+    for line in right_lines:
+        line = line[0]
+        keys.append(line[1])
+    order = np.argsort(keys)
+    ordered_lines = []
+    for ii in range(len(right_lines)):
+        ordered_lines.append(right_lines[order[ii]])
+
+    # Draw rectangles
+    for ii in range(len(right_lines) - 1):
+        a = np.array(right_lines[ii]).reshape((2,2))
+        b = np.flipud(np.array(right_lines[ii]).reshape((2,2)))
+        pts = np.vstack((a,b))
+        cv2.polylines(img, [pts], True, (0,0,255), 5)
+
+
         
 
 if __name__ == "__main__":
