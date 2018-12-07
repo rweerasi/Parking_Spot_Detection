@@ -331,7 +331,7 @@ def highlight_spots(img, long_lines):
     keys = []
     for line in left_lines:
         line = line[0]
-        keys.append(line[1])
+        keys.append(line[3])
     order = np.argsort(keys)
     ordered_lines = []
     for ii in range(len(left_lines)):
@@ -339,10 +339,10 @@ def highlight_spots(img, long_lines):
     
     # Draw rectangles 
     for ii in range(len(left_lines) - 1):
-        a = np.array(left_lines[ii]).reshape((2,2))
-        b = np.flipud(np.array(left_lines[ii+1]).reshape((2,2)))
+        a = np.array(ordered_lines[ii]).reshape((2,2))
+        b = np.flipud(np.array(ordered_lines[ii+1]).reshape((2,2)))
         pts = np.vstack((a, b))
-        cv2.polylines(img, [pts], True, (0, 0, 255), 5)
+        cv2.polylines(img, [pts], True, (0, 0, 255), 3)
 
     # Sort right by right-intercept
     keys = []
@@ -356,10 +356,10 @@ def highlight_spots(img, long_lines):
 
     # Draw rectangles
     for ii in range(len(right_lines) - 1):
-        a = np.array(right_lines[ii]).reshape((2,2))
-        b = np.flipud(np.array(right_lines[ii]).reshape((2,2)))
+        a = np.array(ordered_lines[ii]).reshape((2,2))
+        b = np.flipud(np.array(ordered_lines[ii+1]).reshape((2,2)))
         pts = np.vstack((a,b))
-        cv2.polylines(img, [pts], True, (0,0,255), 5)
+        cv2.polylines(img, [pts], True, (0,0,255), 3)
 
 
         
