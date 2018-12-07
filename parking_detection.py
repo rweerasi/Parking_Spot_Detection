@@ -175,7 +175,7 @@ def hc():
     print(sch.linkage(X, method = 'ward')[-30:,2])
 
 
-    n_clust = 9
+    n_clust = 7
     # Fitting Hierarchical Clustering to the dataset
     hc = AgglomerativeClustering(n_clusters = n_clust, affinity = 'euclidean', linkage = 'ward')
     y_hc = hc.fit_predict(X)
@@ -276,6 +276,72 @@ def lines_processing(lines):
 
     #return left_lines, right_lines
 
+
+def extend_lines(lines):
+
+    # Separate into left and right 
+    border = 1024
+    left_lines = []; right_lines = []
+    for line in lines:
+        line = line[0]
+        if line[0] < border and line[2] < border:
+            left_lines.append([line])
+        if line[0] > border and line[2] > border:
+            right_lines.append([line])
+
+    # Extend to edge of screen
+    long_lines = []
+    for line in left_lines:
+        line = line[0]
+        if line[0] < line[2]:
+            x1 = line[0]; y1 = line[1]
+            x2 = line[2]; y2 = line[3]
+        else:
+            x1 = line[2]; y1 = line[3]
+            x2 = line[0]; y2 = line[1]
+        m = (y2-y1)/(x2-x1)
+        b = y1 - m * x1
+        long_lines.append([[0, int(b), x2, y2]])
+    for line in right_lines:
+        line = line[0]
+        if line[0] < line[2]:
+            x1 = line[0]; y1 = line[1]
+            x2 = line[2]; y2 = line[3]
+        else:
+            x1 = line[2]; y1 = line[3]
+            x2 = line[0]; y2 = line[1]
+        m = (y2-y1)/(x2-x1)
+        b = y1 - m * x1
+        long_lines.append([[x1, y1, 2048, int(m*2048+b)]])
+
+    return long_lines
+
+def highlight_spots(img, long_lines):
+
+    # Separate into left and right 
+    border = 1024
+    left_lines = []; right_lines = []
+    for line in lines:
+        line = line[0]
+        if line[0] < border and line[2] < border:
+            left_lines.append([line])
+        if line[0] > border and line[2] > border:
+            right_lines.append([line])
+
+    # Sort left lines by y-intercept
+    keys = []
+    for line in left_lines:
+        line = line[0]
+        keys.append(line[1])
+    order = np.argsort(keys)
+    ordered_lines = []
+    for ii in range(len(left_lines)):
+        ordered_lines.append(left_lines[order[ii]])
+    
+    for ii in range(len(left_lines) - 1):
+        pass
+        
+        
 
 if __name__ == "__main__":
 
