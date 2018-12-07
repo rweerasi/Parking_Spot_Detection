@@ -174,7 +174,7 @@ def hc():
     #print(sch.linkage(X, method = 'ward')[-30:,2])
 
 
-    n_clust = 9
+    n_clust = 10
     # Fitting Hierarchical Clustering to the dataset
     hc = AgglomerativeClustering(n_clusters = n_clust, affinity = 'euclidean', linkage = 'ward')
     y_hc = hc.fit_predict(X)
@@ -280,7 +280,7 @@ def lines_processing(lines):
 def extend_lines(lines):
 
     # Separate into left and right 
-    border = 700
+    border = 1000
     left_lines = []; right_lines = []
     for line in lines:
         line = line[0]
@@ -319,7 +319,7 @@ def extend_lines(lines):
 def highlight_spots(img, long_lines, car_lines):
 
     # Separate into left and right 
-    border = 700
+    border = 1000
     left_lines = []; right_lines = []
     for line in long_lines:
         line = line[0]
@@ -338,16 +338,40 @@ def highlight_spots(img, long_lines, car_lines):
     for ii in range(len(left_lines)):
         ordered_lines.append(left_lines[order[ii]])
     
+    print(ordered_lines)
+    print(car_lines)
+    print(np.shape(car_lines))
+
     # Draw rectangles 
     for ii in range(len(left_lines) - 1):
         a = np.array(ordered_lines[ii]).reshape((2,2))
         b = np.flipud(np.array(ordered_lines[ii+1]).reshape((2,2)))
         pts = np.vstack((a, b))
-        if True:
+        flag = 0
+        ncar = len(car_lines)
+        print(ncar)
+
+        for jj in range(ncar):
+
+            mean_x = 0.5*(car_lines[jj][0][0] + car_lines[jj][0][2])
+            mean_y = 0.5*(car_lines[jj][0][1] + car_lines[jj][0][3])
+
+            x_least = min(a[0][0],b[1][0])
+            x_high = max(a[1][0],b[0][0])
+            y_least = min(a[0][1],b[1][1],a[1][1],b[0][1])
+            y_high = max(a[0][1],b[1][1],a[1][1],b[0][1])
+
+            if mean_x > x_least and mean_x < x_high and \
+            mean_y > y_least and mean_y < y_high:
+
+                flag = 1 
+
+ 
+        if flag == 1:
             cv2.fillPoly(img, [pts], (0,0,255))
             #cv2.polylines(img, [pts], True, (0,0,255), 3)
         else:
-            cv2.polylines(img, [pts], True, (0,255,0), 3)
+            cv2.fillPoly(img, [pts], (0,255,0))
 
     # Sort right by right-intercept
     keys = []
@@ -364,11 +388,29 @@ def highlight_spots(img, long_lines, car_lines):
         a = np.array(ordered_lines[ii]).reshape((2,2))
         b = np.flipud(np.array(ordered_lines[ii+1]).reshape((2,2)))
         pts = np.vstack((a,b))
-        if True:
+        flag = 0
+
+        for jj in range(ncar):
+
+            mean_x = 0.5*(car_lines[jj][0][0] + car_lines[jj][0][2])
+            mean_y = 0.5*(car_lines[jj][0][1] + car_lines[jj][0][3])
+
+            x_least = min(a[0][0],b[1][0])
+            x_high = max(a[1][0],b[0][0])
+            y_least = min(a[0][1],b[1][1],a[1][1],b[0][1])
+            y_high = max(a[0][1],b[1][1],a[1][1],b[0][1])
+
+            if mean_x > x_least and mean_x < x_high and \
+            mean_y > y_least and mean_y < y_high:
+
+                flag = 1 
+
+        if flag == 1:
             cv2.fillPoly(img, [pts], (0,0,255))
+            print("Hey")
             #cv2.polylines(img, [pts], True, (0,0,255), 3)
         else:
-            cv2.polylines(img, [pts], True, (0,255,0), 3)
+            cv2.fillPoly(img, [pts],(0,255,0))
 
 
 if __name__ == "__main__":
