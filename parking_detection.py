@@ -76,55 +76,21 @@ def line_dist(line1, line2):
 
     return np.linalg.norm(line1-line2)
 
-'''
-def get_slopes(img,lines):
 
-    lines = np.array(lines)
-    x_vec = lines[:,:,0] - lines[:,:,2]
-    y_vec = lines[:,:,1] - lines[:,:,3]
-    print(lines)
-    slope = np.divide(y_vec,x_vec)
-    intercept = lines[:,:,1] - np.multiply(lines[:,:,0],slope)
-    n_lines, _ = np.shape(intercept)
-
-    new_lines = np.zeros((n_lines*n_lines,1,4))
-    k = 0
-
-    thresh = 100
-
-    for i in range(0,n_lines):
-        for j in range(i, n_lines):
-
-            if (abs(slope[i,0] - slope[j,0]) < 0.1 and abs(intercept[i,0] - intercept[j,0]) < 2):
-                if (lines[i,0,0] > lines[j,0,0]):
-
-                    dist = line_dist(lines[j,0,2:4],lines[i,0,0:2])
-
-                    if dist < thresh:
-                        new_lines[k,0,0] = lines[j,0,0]
-                        new_lines[k,0,1] = lines[j,0,1]
-                        new_lines[k,0,2] = lines[i,0,2]
-                        new_lines[k,0,3] = lines[i,0,3]
-
-                else:
-
-                    dist = line_dist(lines[i,0,2:4],lines[j,0,0:2])
-
-                    if dist < thresh:
-
-                        new_lines[k,0,0] = lines[i,0,0]
-                        new_lines[k,0,1] = lines[i,0,1]
-                        new_lines[k,0,2] = lines[j,0,2]
-                        new_lines[k,0,3] = lines[j,0,3]
-
-            k = k+1
-
-    new_lines = new_lines[:k,:,:]
-    new_lines = new_lines.astype(int)
-
-    return new_lines
-'''
 def get_scatter(lines):
+
+    """
+    This function gives us the points to a scatter plot where
+    the points in the plot are points sampled from the line made by
+    Hough Transform
+
+    INPUT: The lines which are returned by the Hough Transform
+
+    OUTPUT: The scatter plot corresponding to those lines. We also have outputted
+        a .csv file which saves these points
+
+    """
+
 
     lines = np.array(lines)
     x1_vec = lines[:,0,0]  
@@ -148,8 +114,6 @@ def get_scatter(lines):
         x_points = np.append(x_points,np.linspace(x1_vec[i],x2_vec[i],10))
         y_points = np.append(y_points,np.linspace(y1_vec[i],y2_vec[i],10))
 
-    #y_points = np.flip(x_points)
-
     X = np.vstack((x_points,y_points))
 
     plt.scatter(x_points,y_points)
@@ -158,6 +122,21 @@ def get_scatter(lines):
     plt.savefig("scatter.png")
 
 def hc():
+
+    """
+
+    This function takes the points from a .csv file and performs hierarchical clustering.
+    You have to look the dendogram that is displayed and chosoe the number of clusters 
+    accordingly
+
+    INPUT: This function takes the scatter plot from the .csv files and performs 
+    hierarchical clustering over it
+
+    PARAMETERS: You may have to tune to number of clusters based on the parking
+    lot image you have.
+
+    OUTPUT: The scatter plot and the computed cluster labels are then returned.
+    """
 
     X = np.genfromtxt('foo.csv',delimiter=',')
 
@@ -173,32 +152,36 @@ def hc():
     #print(sch.linkage(X, method = 'ward')[-30:,2])
 
 
-    n_clust = 10
+    n_clust = 9
     # Fitting Hierarchical Clustering to the dataset
     hc = AgglomerativeClustering(n_clusters = n_clust, affinity = 'euclidean', linkage = 'ward')
     y_hc = hc.fit_predict(X)
 
     X[:,1] = np.round(0.1*X[:,1])
 
-    # Visualising the clusters
-    """
-    plt.scatter(X[y_hc == 0, 0], X[y_hc == 0, 1], s = 100, c = 'red', label = 'Cluster 1')
-    plt.scatter(X[y_hc == 1, 0], X[y_hc == 1, 1], s = 100, c = 'blue', label = 'Cluster 2')
-    plt.scatter(X[y_hc == 2, 0], X[y_hc == 2, 1], s = 100, c = 'green', label = 'Cluster 3')
-    plt.scatter(X[y_hc == 3, 0], X[y_hc == 3, 1], s = 100, c = 'cyan', label = 'Cluster 4')
-    plt.scatter(X[y_hc == 4, 0], X[y_hc == 4, 1], s = 100, c = 'magenta', label = 'Cluster 5')
-    plt.scatter(X[y_hc == 5, 0], X[y_hc == 5, 1], s = 100, c = 'yellow', label = 'Cluster 6')
-    plt.scatter(X[y_hc == 6, 0], X[y_hc == 6, 1], s = 100, c = 'brown', label = 'Cluster 7')
-    plt.scatter(X[y_hc == 7, 0], X[y_hc == 7, 1], s = 100, c = 'black', label = 'Cluster 8')
-    plt.scatter(X[y_hc == 8, 0], X[y_hc == 8, 1], s = 100, c = 'orange', label = 'Cluster 9')
-    #plt.scatter(X[y_hc == 9, 0], X[y_hc == 9, 1], s = 100, c = 'purple', label = 'Cluster 10')
-    #plt.scatter(X[y_hc == 10, 0], X[y_hc == 10, 1], s = 100, c = 'pink', label = 'Cluster 11')
-    
-    plt.title('Clusters of parking lines')
-    """
     return X, y_hc, n_clust
 
 def parking_spots(X,y_hc,n_clust):
+
+    """
+    The following function takes the scatter plot and the cluster labels. It then joins the
+    furthest points in the clsuter labels so as to form exactly one continuous line per parking
+    line. We now have a one to one correspondance between number of parking lines and the lines
+    in the figure
+
+    INPUTS:
+
+        X: The scatter plot made using the original Hough Lines
+
+        y_hc: The cluster labels
+
+        n_clust: Number of clusters
+
+    OUTPUTS:
+
+        lines: The line which is formed my connecting the farthest points in the cluster
+
+    """
 
 
     lines = np.zeros((n_clust,1,4))
@@ -217,22 +200,6 @@ def parking_spots(X,y_hc,n_clust):
     return lines
         
 
-
-def get_harris_corners(img):
-
-    gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-    gray = np.float32(gray)
-    dst = cv2.cornerHarris(gray,2,3,0.04)
-
-    #result is dilated for marking the corners, not important
-    dst = cv2.dilate(dst,None)
-    # Threshold for an optimal value, it may vary depending on the image.
-    img[dst>0.01*dst.max()]=[255,0,0]
-    cv2.imshow('dst',img)
-    if cv2.waitKey(0) & 0xff == 27:
-        cv2.destroyAllWindows()
-
-    return dst
 
 def lines_processing(lines):
     """ Processes the line from the Hough Transform in order to glean
@@ -263,23 +230,25 @@ def lines_processing(lines):
             horizontal_lines.append([line])
 
     return horizontal_lines
-    '''
-    left_lines = []; right_lines = []
-    for line in horizontal_lines:
-        line = line[0]
-        if line[0] < 1024 and line[2] < 1024:
-            left_lines.append([line])
-        if line[0] > 1024 and line[2] > 1024:
-            right_lines.append([line])
-    ''' 
-
-    #return left_lines, right_lines
 
 
 def extend_lines(lines):
 
-    # Separate into left and right 
-    border = 1000
+    """
+    The following functions extends the lines until the end of the image. This is
+    necessary because the Hough Transform usually doesn't detect
+    the entire line. The lines in the left are extended till x = 0 and the lines
+    on the right are extended till x = 2047
+
+    INPUT:
+    lines: list of lines, represented as 4 values, (start_x, start_y, end_x, end_y)
+
+    OUTPUT:
+    long_lines: list of extended lines, in the same format as the input
+
+    """
+
+    border = 700
     left_lines = []; right_lines = []
     for line in lines:
         line = line[0]
@@ -317,8 +286,27 @@ def extend_lines(lines):
 
 def highlight_spots(img, long_lines, car_lines):
 
+    """
+    This function creates the bounding box of the parking spot. Then it checks
+    if the parking spot is occupied by a car or not. If the spot it occupied, it
+    is highlighted to be red, if it is vacant, it is highlighted to be green
+
+    INPUTS:
+
+        img: The given image from which the parking spot is to be detected
+
+        long_lines: The extended lines from the hough transform and clustering
+            represented as 4 values, (start_x, start_y, end_x, end_y)
+
+        car_lines: The line of the bottom of the bounding box of the car in the
+            same format as long_lines
+
+    OUTPUTS: The image with the highlighted parking spots is displayed and saved.
+
+    """
+
     # Separate into left and right 
-    border = 1000
+    border = 700
     left_lines = []; right_lines = []
     for line in long_lines:
         line = line[0]
@@ -336,10 +324,8 @@ def highlight_spots(img, long_lines, car_lines):
     ordered_lines = []
     for ii in range(len(left_lines)):
         ordered_lines.append(left_lines[order[ii]])
-    
-    print(ordered_lines)
-    print(car_lines)
-    print(np.shape(car_lines))
+
+    ncar = len(car_lines)
 
     # Draw rectangles 
     for ii in range(len(left_lines) - 1):
@@ -347,23 +333,27 @@ def highlight_spots(img, long_lines, car_lines):
         b = np.flipud(np.array(ordered_lines[ii+1]).reshape((2,2)))
         pts = np.vstack((a, b))
         flag = 0
-        ncar = len(car_lines)
-        print(ncar)
 
         for jj in range(ncar):
 
             mean_x = 0.5*(car_lines[jj][0][0] + car_lines[jj][0][2])
             mean_y = 0.5*(car_lines[jj][0][1] + car_lines[jj][0][3])
 
-            x_least = min(a[0][0],b[1][0])
-            x_high = max(a[1][0],b[0][0])
-            y_least = min(a[0][1],b[1][1],a[1][1],b[0][1])
-            y_high = max(a[0][1],b[1][1],a[1][1],b[0][1])
+            x_least = 0
+            #x_high = max(a[1][0],b[0][0])
+            y_least = a[0][1]
+            #y_high = min(a[1][1],a[0][1])
+            y_high = b[1][1]
+            x_high = a[1][0]
 
-            if mean_x > x_least and mean_x < x_high and \
-            mean_y > y_least and mean_y < y_high:
+            print(a)
+            print(b)
+            print("Left\n")
 
-                flag = 1 
+            if car_lines[jj][0][2]  > x_least and car_lines[jj][0][2]  < x_high and \
+            car_lines[jj][0][3] > y_least and car_lines[jj][0][3] < y_high:
+                print(car_lines[jj][0][1])
+                flag = 1
 
  
         if flag == 1:
@@ -388,25 +378,28 @@ def highlight_spots(img, long_lines, car_lines):
         b = np.flipud(np.array(ordered_lines[ii+1]).reshape((2,2)))
         pts = np.vstack((a,b))
         flag = 0
-
         for jj in range(ncar):
 
             mean_x = 0.5*(car_lines[jj][0][0] + car_lines[jj][0][2])
             mean_y = 0.5*(car_lines[jj][0][1] + car_lines[jj][0][3])
 
-            x_least = min(a[0][0],b[1][0])
-            x_high = max(a[1][0],b[0][0])
-            y_least = min(a[0][1],b[1][1],a[1][1],b[0][1])
-            y_high = max(a[0][1],b[1][1],a[1][1],b[0][1])
+            x_least = a[0][0]
+            #x_high = max(a[1][0],b[0][0])
+            y_least = a[0][1]
+            #y_high = min(a[1][1],a[0][1])
+            y_high = b[1][1]
+            x_high = 2046
 
-            if mean_x > x_least and mean_x < x_high and \
-            mean_y > y_least and mean_y < y_high:
+            print(a)
+            print(b)
+            print("Right\n")
 
+            if car_lines[jj][0][2]  > x_least and car_lines[jj][0][2]  < x_high and \
+            car_lines[jj][0][3] > y_least and car_lines[jj][0][3] < y_high:
                 flag = 1 
 
         if flag == 1:
             cv2.fillPoly(img, [pts], (0,0,255))
-            print("Hey")
             #cv2.polylines(img, [pts], True, (0,0,255), 3)
         else:
             cv2.fillPoly(img, [pts],(0,255,0))
@@ -414,8 +407,6 @@ def highlight_spots(img, long_lines, car_lines):
 
 if __name__ == "__main__":
 
-    #img=cv2.imread("parking_2.png")
-    #height, width, channels = img.shape
     param=[1,0.001,10,60,40]
     filen="example.jpg"
 
@@ -439,10 +430,7 @@ if __name__ == "__main__":
     clust_lines = parking_spots(X,y_hc,n_clust)
     clust_lines = lines_processing(clust_lines)
     print(clust_lines)
-    #new_lines = get_slopes(img,h_lines)
-    #new_lines = lines_processing(new_lines)
     line_image = draw_lines(img, clust_lines)
-    #line_image_slope = draw_lines(img, new_lines)
     cv2.imwrite("woslope.png",line_image)
     
    # imsave("wslope.png",line_image_slope)
@@ -450,25 +438,3 @@ if __name__ == "__main__":
 
     # Save images
     cv2.imwrite("mask_image.png",gray_image*mask_road)
-
-    """
-    imsave("line_image"+str(param)+".png", line_image)
-    plt.figure()
-    plt.imshow(line_image)
-    plt.show()
-    """
-
-    #region_of_interest_vertices = [(0, height),(0, height/2.5),(width, height/2.5),]
-
-    #cropped_image = mask_image(img, region_of_interest(img,np.array([region_of_interest_vertices], np.int32),)) #the actual cropped image
-    #plt.figure()
-    #plt.imshow(cropped_image)
-    #plt.show()
-    #imsave("cropped_image.png", cropped_image)
-
-    #lines = get_lines(img, region_of_interest_vertices)
-    #line_image = draw_lines(img, lines)
-    #imsave("line_image.png", line_image)
-    #plt.figure()
-    ##plt.imshow(line_image)
-    #plt.show()
